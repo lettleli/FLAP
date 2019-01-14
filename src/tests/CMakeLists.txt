@@ -1,28 +1,27 @@
-#################################################################
-# TESTS
-#################################################################
+include(GNUInstallDirs)
 
-FILE(GLOB_RECURSE TESTS_SRC *.f90 *.F90)
-SET(TESTS_SRC ${TESTS_SRC} PARENT_SCOPE)
+SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/tests/${CMAKE_INSTALL_BINDIR}")
 
-#################################################################
-# EXTERNAL LIBRARIES
-#################################################################
+function(add_flap_test test_src libraries)
+    get_filename_component(test_name ${test_src} NAME_WE)
 
-FOREACH(TEST_SRC ${TESTS_SRC})
-    GET_FILENAME_COMPONENT(EXE_NAME ${TEST_SRC} NAME_WE)
-    ADD_EXECUTABLE(${EXE_NAME} ${TEST_SRC})
-    TARGET_LINK_LIBRARIES(${EXE_NAME} ${LIB} fortran_tester)
+    add_executable(${test_name} ${test_src})
+    foreach(lib IN LISTS libraries)
+        target_link_libraries(${test_name} ${lib})
+    endforeach()
+    add_test(NAME ${test_name} COMMAND ${test_name})
+endfunction()
 
-    #################################################################
-    # External projects
-    #################################################################
-    FOREACH(PENF_LIB ${PENF_LIBS})
-            TARGET_LINK_LIBRARIES(${EXE_NAME} ${PENF_LIB})
-    ENDFOREACH()
+foreach(flap_test
+    flap_test_ansi_color_style.f90
+    flap_test_basic.f90
+    flap_test_choices_logical.f90
+    flap_test_hidden.f90
+    flap_test_minimal.f90
+    flap_test_nested.f90
+    flap_test_string.f90
+)
+    add_flap_test(${flap_test} "FLAP;PENF::PENF")
+endforeach()
 
-    ADD_TEST(${EXE_NAME}_TEST ${EXECUTABLE_OUTPUT_PATH}/${EXE_NAME})
-ENDFOREACH()
-
-
-
+add_flap_test(flap_test_group.f90 "FLAP;PENF::PENF;fortran_tester::fortran_tester")

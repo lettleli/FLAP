@@ -1,21 +1,69 @@
 #################################################################
-# Search F90 files recursively in all subdirs
+# set type specific output defaults
 #################################################################
+include(GNUInstallDirs)
 
-FILE(GLOB_RECURSE LIB_SRC *.f90 *.F90 *.c)
-SET(LIB_SRC ${LIB_SRC} PARENT_SCOPE)
+SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}")
+SET(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}")
+SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/${CMAKE_INSTALL_BINDIR}")
+SET(CMAKE_Fortran_MODULE_DIRECTORY "${PROJECT_BINARY_DIR}/${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}")
 
-#################################################################
-# Library target
-#################################################################
-ADD_LIBRARY(${LIB} ${LIB_SRC})
+set(LIB FLAP)
+add_library(${LIB}
+    flap.f90
+    flap_command_line_argument_t.F90
+    flap_command_line_arguments_group_t.f90
+    flap_command_line_interface_t.F90
+    flap_object_t.f90
+    flap_utils_m.f90
+)
+add_library(${NAMESPACE}${LIB} ALIAS ${LIB})
 
-#################################################################
-# External projects
-#################################################################
-FOREACH(PENF_LIB ${PENF_LIBS} ${FACE_LIBS})
-        TARGET_LINK_LIBRARIES(${LIB} ${PENF_LIB})
-ENDFOREACH()
+target_include_directories(${LIB}
+    INTERFACE
+        $<BUILD_INTERFACE:${CMAKE_Fortran_MODULE_DIRECTORY}>
+)
 
-SET_TARGET_PROPERTIES(${LIB} PROPERTIES VERSION ${${LIB}_VERSION} SOVERSION ${${LIB}_SOVERSION})
-EXPORT(TARGETS ${LIB} APPEND FILE ${PROJECT_BINARY_DIR}/${LIB}Targets.cmake)
+include(CheckFortranSourceRuns)
+
+check_fortran_source_runs(
+    "program r16p_support;
+         integer, parameter :: r16p = selected_real_kind(33, 4931);
+         if(r16p < 0) stop 1;
+     end program r16p_support"
+     R16P_SUPPORTED
+     SRC_EXT f90)
+if(R16P_SUPPORTED)
+    set(r16p_supported "_R16P_SUPPORTED")
+endif()
+
+target_compile_definitions(${LIB}
+    PRIVATE
+        ${r16p_supported}
+)
+
+target_link_libraries(${LIB}
+    PRIVATE
+        FACE::FACE
+        PENF::PENF
+)
+
+set_target_properties(${LIB} PROPERTIES
+    VERSION
+        ${PROJECT_VERSION}
+    SOVERSION
+        ${PROJECT_VERSION_MAJOR}
+)
+
+# installation and export of targets
+install(DIRECTORY ${CMAKE_Fortran_MODULE_DIRECTORY}/
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}
+    COMPONENT Developement
+)
+
+install(TARGETS ${LIB} EXPORT ${TARGETS_EXPORT_NAME}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT RuntimeLibraries
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT RuntimeLibraries
+    INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}
+)
