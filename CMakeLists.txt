@@ -31,7 +31,7 @@ set(NAMESPACE "${PROJECT_NAME}::")
 
 find_package(FACE QUIET)
 
-if (NOT FACE_FOUND)
+if (NOT (FACE_FOUND OR (TARGET FACE::FACE)))
     include(FetchContent)
     FetchContent_Declare(
         FACE
@@ -45,13 +45,11 @@ if (NOT FACE_FOUND)
         FetchContent_Populate(FACE)
         add_subdirectory(${face_SOURCE_DIR} ${face_BINARY_DIR})
     endif()
-    unset(CMAKE_PREFIX_PATH)
-    set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${face_BINARY_DIR} CACHE STRING "Directories specifying installation prefixes to be searched with find_...()" FORCE)
 endif()
 
 find_package(PENF QUIET)
 
-if (NOT PENF_FOUND)
+if (NOT (PENF_FOUND OR (TARGET PENF::PENF)))
     include(FetchContent)
     FetchContent_Declare(
         PENF
@@ -65,8 +63,6 @@ if (NOT PENF_FOUND)
         FetchContent_Populate(PENF)
         add_subdirectory(${penf_SOURCE_DIR} ${penf_BINARY_DIR})
     endif()
-    unset(CMAKE_PREFIX_PATH)
-    set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${penf_BINARY_DIR} CACHE STRING "Directories specifying installation prefixes to be searched with find_...()" FORCE)
 endif()
 
 
@@ -79,13 +75,18 @@ add_subdirectory(src/lib)
 #################################################################
 # ENABLE TESTING
 #################################################################
+if(${PROJECT_SOURCE_DIR} STREQUAL ${CMAKE_SOURCE_DIR})
+    set(build_testing ON)
+elseif(BUILD_TESTING)
+    set(build_testing OFF)
+    option(BUILD_TESTING_${PROJECT_NAME} "Build the testing tree for project ${PROJECT_NAME}." OFF)
+    mark_as_advanced(BUILD_TESTING_${PROJECT_NAME})
+endif()
 
-option(BUILD_TESTING "Build the testing tree." OFF)
-if(BUILD_TESTING)
-    include(CTest)
+if(build_testing OR BUILD_TESTING_${PROJECT_NAME})
     find_package(fortran_tester QUIET)
 
-    if (NOT fortran_tester_FOUND)
+    if (NOT (fortran_tester_FOUND OR (TARGET fortran_tester::fortran_tester)))
         include(FetchContent)
         FetchContent_Declare(
             fortran_tester
@@ -99,9 +100,9 @@ if(BUILD_TESTING)
             FetchContent_Populate(fortran_tester)
             add_subdirectory(${fortran_tester_SOURCE_DIR} ${fortran_tester_BINARY_DIR})
         endif()
-        unset(CMAKE_PREFIX_PATH)
-        set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${fortran_tester_BINARY_DIR} CACHE STRING "Directories specifying installation prefixes to be searched with find_...()" FORCE)
     endif()
+    
+    enable_testing()
     add_subdirectory(src/tests)
 endif()
 
