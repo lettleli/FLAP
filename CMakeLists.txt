@@ -76,14 +76,18 @@ add_subdirectory(src/lib)
 # ENABLE TESTING
 #################################################################
 if(${PROJECT_SOURCE_DIR} STREQUAL ${CMAKE_SOURCE_DIR})
-    set(build_testing ON)
-elseif(BUILD_TESTING)
-    set(build_testing OFF)
-    option(BUILD_TESTING_${PROJECT_NAME} "Build the testing tree for project ${PROJECT_NAME}." OFF)
-    mark_as_advanced(BUILD_TESTING_${PROJECT_NAME})
+    set(main_project TRUE)
+else()
+    set(main_project FALSE)
 endif()
 
-if(build_testing OR BUILD_TESTING_${PROJECT_NAME})
+include(CMakeDependentOption)
+cmake_dependent_option(BUILD_TESTING_${PROJECT_NAME}
+     "Build the testing tree for project ${PROJECT_NAME}." OFF
+     "BUILD_TESTING;NOT main_project" OFF
+)
+
+if(main_project OR BUILD_TESTING_${PROJECT_NAME})
     find_package(fortran_tester QUIET)
 
     if (NOT (fortran_tester_FOUND OR (TARGET fortran_tester::fortran_tester)))
