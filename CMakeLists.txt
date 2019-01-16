@@ -1,9 +1,10 @@
-# The target of the library FACE is exported
-# as FACE::FACE to a package config file for FACE
+# The target of the library FLAP is exported
+# as FLAP::FLAP to a package config file for FLAP
 #
-# usage find_package(FACE)
-# ...
-# target_link_library(<target> FACE)
+# usage:
+#     find_package(FLAP)
+#     ...
+#     target_link_library(<target> FLAP)
 #
 # the config file is generatet in the build and install directories
 
