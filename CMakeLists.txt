@@ -7,28 +7,19 @@
 #
 # the config file is generatet in the build and install directories
 
-#################################################################
-# HEADER
-#################################################################
 cmake_minimum_required(VERSION 3.11...3.13)
 project(FLAP VERSION 1.1.8 LANGUAGES Fortran)
 
-#################################################################
 # seach path for additional cmake modules
-#################################################################
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake/Modules)
 
-#################################################################
-# set export variables needed for building
-#################################################################
 
+# set export variables needed for building
 set(TARGETS_EXPORT_NAME "${PROJECT_NAME}-targets")
 set(NAMESPACE "${PROJECT_NAME}::")
 
-#################################################################
-# third party packages 
-#################################################################
 
+# third party packages
 find_package(FACE QUIET)
 
 if (NOT (FACE_FOUND OR (TARGET FACE::FACE)))
@@ -66,15 +57,10 @@ if (NOT (PENF_FOUND OR (TARGET PENF::PENF)))
 endif()
 
 
-#################################################################
 # generate the library and install instructions
-#################################################################
-
 add_subdirectory(src/lib)
 
-#################################################################
-# ENABLE TESTING
-#################################################################
+# testing
 if(${PROJECT_SOURCE_DIR} STREQUAL ${CMAKE_SOURCE_DIR})
     set(main_project TRUE)
 else()
@@ -87,7 +73,8 @@ cmake_dependent_option(BUILD_TESTING_${PROJECT_NAME}
      "BUILD_TESTING;NOT main_project" OFF
 )
 
-if(main_project OR BUILD_TESTING_${PROJECT_NAME})
+if((main_project AND BUILD_TESTING) OR BUILD_TESTING_${PROJECT_NAME})
+    # third party packages for testing
     find_package(fortran_tester QUIET)
 
     if (NOT (fortran_tester_FOUND OR (TARGET fortran_tester::fortran_tester)))
@@ -110,10 +97,7 @@ if(main_project OR BUILD_TESTING_${PROJECT_NAME})
     add_subdirectory(src/tests)
 endif()
 
-#################################################################
 # generate package config files
-#################################################################
-
 include(GNUInstallDirs)
 set(project_config "${PROJECT_NAME}-config.cmake")
 set(cmake_files_dir "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles")

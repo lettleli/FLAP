@@ -1,12 +1,10 @@
-#################################################################
 # set type specific output defaults
-#################################################################
 include(GNUInstallDirs)
 
 SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}")
 SET(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}")
 SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/${CMAKE_INSTALL_BINDIR}")
-SET(CMAKE_Fortran_MODULE_DIRECTORY "${PROJECT_BINARY_DIR}/${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}")
+SET(CMAKE_Fortran_MODULE_DIRECTORY "${PROJECT_BINARY_DIR}/modules")
 
 set(LIB FLAP)
 add_library(${LIB}
@@ -24,6 +22,7 @@ target_include_directories(${LIB}
         $<BUILD_INTERFACE:${CMAKE_Fortran_MODULE_DIRECTORY}>
 )
 
+# set variables used for compile definitions of targets after support check
 include(CheckFortranSourceRuns)
 
 check_fortran_source_runs(
