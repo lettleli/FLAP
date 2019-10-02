@@ -8,7 +8,7 @@
 #
 # the config file is generatet in the build and install directories
 
-cmake_minimum_required(VERSION 3.11...3.13)
+cmake_minimum_required(VERSION 3.14...3.15)
 project(FLAP VERSION 1.1.8 LANGUAGES Fortran)
 
 # seach path for additional cmake modules
@@ -21,22 +21,28 @@ set(NAMESPACE "${PROJECT_NAME}::")
 
 
 # third party packages
+option(USE_GIT_SUBMODULES "Use the git submodules in src/third_party instead of downloading the needed Packages with FetchContent" ON)
+
+
 find_package(FACE QUIET)
 
 if (NOT (FACE_FOUND OR (TARGET FACE::FACE)))
     include(FetchContent)
     FetchContent_Declare(
         FACE
-        GIT_REPOSITORY https://github.com/lettleli/FACE.git
-        GIT_TAG modern_cmake_targets
+        GIT_REPOSITORY https://github.com/szaghi/FACE.git
+        GIT_TAG master
     )
-
-    FetchContent_GetProperties(FACE)
-    if(NOT face_POPULATED)
-        message(STATUS "Populating FACE project ...")
-        FetchContent_Populate(FACE)
-        add_subdirectory(${face_SOURCE_DIR} ${face_BINARY_DIR})
+    if (USE_GIT_SUBMODULES)
+        set(FETCHCONTENT_SOURCE_DIR_FACE ${CMAKE_CURRENT_SOURCE_DIR}/src/third_party/FACE CACHE PATH "")
     endif()
+    FetchContent_MakeAvailable(FACE)
+    # FetchContent_GetProperties(FACE)
+    # if(NOT face_POPULATED)
+    #     message(STATUS "Populating FACE project ...")
+    #     FetchContent_Populate(FACE)
+    #     add_subdirectory(${face_SOURCE_DIR} ${face_BINARY_DIR})
+    # endif()
 endif()
 
 find_package(PENF QUIET)
@@ -45,16 +51,19 @@ if (NOT (PENF_FOUND OR (TARGET PENF::PENF)))
     include(FetchContent)
     FetchContent_Declare(
         PENF
-        GIT_REPOSITORY https://github.com/lettleli/PENF.git
-        GIT_TAG modern_cmake_targets
+        GIT_REPOSITORY https://github.com/szaghi/PENF.git
+        GIT_TAG master
     )
-
-    FetchContent_GetProperties(PENF)
-    if(NOT penf_POPULATED)
-        message(STATUS "Populating PENF project ...")
-        FetchContent_Populate(PENF)
-        add_subdirectory(${penf_SOURCE_DIR} ${penf_BINARY_DIR})
+    if (USE_GIT_SUBMODULES)
+        set(FETCHCONTENT_SOURCE_DIR_PENF ${CMAKE_CURRENT_SOURCE_DIR}/src/third_party/PENF CACHE PATH "")
     endif()
+    FetchContent_MakeAvailable(PENF)
+    # FetchContent_GetProperties(PENF)
+    # if(NOT penf_POPULATED)
+    #     message(STATUS "Populating PENF project ...")
+    #     FetchContent_Populate(PENF)
+    #     add_subdirectory(${penf_SOURCE_DIR} ${penf_BINARY_DIR})
+    # endif()
 endif()
 
 
@@ -82,18 +91,21 @@ if((main_project AND BUILD_TESTING) OR BUILD_TESTING_${PROJECT_NAME})
         include(FetchContent)
         FetchContent_Declare(
             fortran_tester
-            GIT_REPOSITORY https://github.com/lettleli/fortran_tester.git
-            GIT_TAG modern_cmake_targets
+            GIT_REPOSITORY https://github.com/pdebuyl/fortran_tester.git
+            GIT_TAG master
         )
-
-        FetchContent_GetProperties(fortran_tester)
-        if(NOT fortran_tester_POPULATED)
-            message(STATUS "Populating fortran_tester project ...")
-            FetchContent_Populate(fortran_tester)
-            add_subdirectory(${fortran_tester_SOURCE_DIR} ${fortran_tester_BINARY_DIR})
+        if (USE_GIT_SUBMODULES)
+            set(FETCHCONTENT_SOURCE_DIR_FORTRAN_TESTER ${CMAKE_CURRENT_SOURCE_DIR}/src/third_party/fortran_tester CACHE PATH "")
         endif()
+        FetchContent_MakeAvailable(fortran_tester)
+        # FetchContent_GetProperties(fortran_tester)
+        # if(NOT fortran_tester_POPULATED)
+        #     message(STATUS "Populating fortran_tester project ...")
+        #     FetchContent_Populate(fortran_tester)
+        #     add_subdirectory(${fortran_tester_SOURCE_DIR} ${fortran_tester_BINARY_DIR})
+        # endif()
     endif()
-    
+
     enable_testing()
     add_subdirectory(src/tests)
 endif()
