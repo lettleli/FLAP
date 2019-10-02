@@ -20,6 +20,10 @@ foreach(flap_test
     flap_test_minimal.f90
     flap_test_nested.f90
     flap_test_string.f90
+    flap_test_duplicated_clas.f90
+    flap_test_save_bash_completion.f90
+    flap_test_save_man_page.f90
+    flap_test_save_usage_to_markdown.f90
 )
     add_flap_test(${flap_test} "FLAP;PENF::PENF")
 endforeach()
