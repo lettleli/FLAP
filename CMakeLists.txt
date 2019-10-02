@@ -22,50 +22,43 @@ set(NAMESPACE "${PROJECT_NAME}::")
 
 # third party packages
 option(USE_GIT_SUBMODULES "Use the git submodules in src/third_party instead of downloading the needed Packages with FetchContent" ON)
-
-
-find_package(FACE QUIET)
-
-if (NOT (FACE_FOUND OR (TARGET FACE::FACE)))
-    include(FetchContent)
-    FetchContent_Declare(
-        FACE
-        GIT_REPOSITORY https://github.com/szaghi/FACE.git
-        GIT_TAG master
-    )
-    if (USE_GIT_SUBMODULES)
-        set(FETCHCONTENT_SOURCE_DIR_FACE ${CMAKE_CURRENT_SOURCE_DIR}/src/third_party/FACE CACHE PATH "")
+if(USE_GIT_SUBMODULES)
+    find_package(Git QUIET)
+    if(GIT_FOUND)
+        # Update submodules as needed
+        option(GIT_SUBMODULE "Check submodules during build" OFF)
+        if(GIT_SUBMODULE)
+            message(DEBUG "Submodule update")
+            execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive
+                            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                            RESULT_VARIABLE GIT_SUBMOD_RESULT)
+            if(NOT GIT_SUBMOD_RESULT EQUAL "0")
+                message(FATAL_ERROR "git submodule update --init --recursive failed with ${GIT_SUBMOD_RESULT}, please checkout submodules")
+            endif()
+        endif()
     endif()
-    FetchContent_MakeAvailable(FACE)
-    # FetchContent_GetProperties(FACE)
-    # if(NOT face_POPULATED)
-    #     message(STATUS "Populating FACE project ...")
-    #     FetchContent_Populate(FACE)
-    #     add_subdirectory(${face_SOURCE_DIR} ${face_BINARY_DIR})
-    # endif()
 endif()
 
-find_package(PENF QUIET)
+include(AddExternalGitPackage)
 
-if (NOT (PENF_FOUND OR (TARGET PENF::PENF)))
-    include(FetchContent)
-    FetchContent_Declare(
-        PENF
-        GIT_REPOSITORY https://github.com/szaghi/PENF.git
-        GIT_TAG master
-    )
-    if (USE_GIT_SUBMODULES)
-        set(FETCHCONTENT_SOURCE_DIR_PENF ${CMAKE_CURRENT_SOURCE_DIR}/src/third_party/PENF CACHE PATH "")
-    endif()
-    FetchContent_MakeAvailable(PENF)
-    # FetchContent_GetProperties(PENF)
-    # if(NOT penf_POPULATED)
-    #     message(STATUS "Populating PENF project ...")
-    #     FetchContent_Populate(PENF)
-    #     add_subdirectory(${penf_SOURCE_DIR} ${penf_BINARY_DIR})
-    # endif()
+if(USE_GIT_SUBMODULES)
+    set(FACE_SUBMODULE ${CMAKE_CURRENT_SOURCE_DIR}/src/third_party/FACE)
+    set(PENF_SUBMODULE ${CMAKE_CURRENT_SOURCE_DIR}/src/third_party/PENF)
 endif()
 
+add_external_git_package(FACE
+    TARGETS FACE::FACE
+    GIT_REPOSITORY https://github.com/szaghi/FACE.git
+    GIT_TAG master
+    FETCHCONTENT_SOURCE_DIR ${FACE_SUBMODULE}
+)
+
+add_external_git_package(PENF
+    TARGETS PENF::PENF
+    GIT_REPOSITORY https://github.com/szaghi/PENF.git
+    GIT_TAG master
+    FETCHCONTENT_SOURCE_DIR ${PENF_SUBMODULE}
+)
 
 # generate the library and install instructions
 add_subdirectory(src/lib)
@@ -85,26 +78,16 @@ cmake_dependent_option(BUILD_TESTING_${PROJECT_NAME}
 
 if((main_project AND BUILD_TESTING) OR BUILD_TESTING_${PROJECT_NAME})
     # third party packages for testing
-    find_package(fortran_tester QUIET)
-
-    if (NOT (fortran_tester_FOUND OR (TARGET fortran_tester::fortran_tester)))
-        include(FetchContent)
-        FetchContent_Declare(
-            fortran_tester
-            GIT_REPOSITORY https://github.com/pdebuyl/fortran_tester.git
-            GIT_TAG master
-        )
-        if (USE_GIT_SUBMODULES)
-            set(FETCHCONTENT_SOURCE_DIR_FORTRAN_TESTER ${CMAKE_CURRENT_SOURCE_DIR}/src/third_party/fortran_tester CACHE PATH "")
-        endif()
-        FetchContent_MakeAvailable(fortran_tester)
-        # FetchContent_GetProperties(fortran_tester)
-        # if(NOT fortran_tester_POPULATED)
-        #     message(STATUS "Populating fortran_tester project ...")
-        #     FetchContent_Populate(fortran_tester)
-        #     add_subdirectory(${fortran_tester_SOURCE_DIR} ${fortran_tester_BINARY_DIR})
-        # endif()
+    if(USE_GIT_SUBMODULES)
+        set(fortran_tester_SUBMODULE ${CMAKE_CURRENT_SOURCE_DIR}/src/third_party/fortran_tester)
     endif()
+
+    add_external_git_package(fortran_tester
+        TARGETS fortran_tester::fortran_tester
+        GIT_REPOSITORY https://github.com/pdebuyl/fortran_tester.git
+        GIT_TAG master
+        FETCHCONTENT_SOURCE_DIR ${fortran_tester_SUBMODULE}
+    )
 
     enable_testing()
     add_subdirectory(src/tests)
