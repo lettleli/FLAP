@@ -32,6 +32,9 @@ function(add_external_git_package NAME)
         #     FetchContent_Populate(${NAME})
         #     add_subdirectory(${${lc_name}_SOURCE_DIR} ${${lc_name}_BINARY_DIR})
         # endif()
+        # if(NOT ${${lc_name}_BINARY_DIR} IN_LIST ${CMAKE_PREFIX_PATH})
+        #     set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${FETCHCONTENT_BASE_DIR} CACHE PATH "Path used for searching by FIND_XXX(), with appropriate suffixes added."
+        # endif()
     endif()
 
 endfunction()

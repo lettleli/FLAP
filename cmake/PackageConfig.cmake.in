@@ -1,4 +1,13 @@
 @PACKAGE_INIT@
 
-include("${CMAKE_CURRENT_LIST_DIR}/@TARGETS_EXPORT_NAME@.cmake")
+include(CMakeFindDependencyMacro)
+
+if(NOT TARGET @EXPORTED_TARGET@ AND NOT @PROJECT_NAME@_BINARY_DIR)
+    foreach(dep IN LISTS @PACKAGE_DEPENDENCIES@)
+        find_dependeny(${dep})
+    endforeach()
+
+    include("${CMAKE_CURRENT_LIST_DIR}/@TARGETS_EXPORT_NAME@.cmake")
+endif()
+
 check_required_components("@PROJECT_NAME@")

@@ -14,29 +14,15 @@ project(FLAP VERSION 1.1.8 LANGUAGES Fortran)
 # seach path for additional cmake modules
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake/Modules)
 
-
 # set export variables needed for building
 set(TARGETS_EXPORT_NAME "${PROJECT_NAME}-targets")
 set(NAMESPACE "${PROJECT_NAME}::")
 
-
 # third party packages
 option(USE_GIT_SUBMODULES "Use the git submodules in src/third_party instead of downloading the needed Packages with FetchContent" ON)
 if(USE_GIT_SUBMODULES)
-    find_package(Git QUIET)
-    if(GIT_FOUND)
-        # Update submodules as needed
-        option(GIT_SUBMODULE "Check submodules during build" OFF)
-        if(GIT_SUBMODULE)
-            message(DEBUG "Submodule update")
-            execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive
-                            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-                            RESULT_VARIABLE GIT_SUBMOD_RESULT)
-            if(NOT GIT_SUBMOD_RESULT EQUAL "0")
-                message(FATAL_ERROR "git submodule update --init --recursive failed with ${GIT_SUBMOD_RESULT}, please checkout submodules")
-            endif()
-        endif()
-    endif()
+    include(GitSubmoduleUpdate)
+    git_submodule_update(OFF)
 endif()
 
 include(AddExternalGitPackage)
@@ -93,10 +79,10 @@ if((main_project AND BUILD_TESTING) OR BUILD_TESTING_${PROJECT_NAME})
     add_subdirectory(src/tests)
 endif()
 
-# generate package config files
+# variables for package config files
 include(GNUInstallDirs)
 set(project_config "${PROJECT_NAME}-config.cmake")
-set(cmake_files_dir "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles")
+set(cmake_files_dir "${CMAKE_CURRENT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}")
 set(config_install_dir "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}")
 set(config_build_dir "${CMAKE_CURRENT_BINARY_DIR}/${config_install_dir}")
 
@@ -117,16 +103,36 @@ export(EXPORT ${TARGETS_EXPORT_NAME}
         ${config_build_dir}/${TARGETS_EXPORT_NAME}.cmake
 )
 
-#create package config
+#Variables needed by PackageConfig.cmake.in: PROJECT_NAME, TARGETS_EXPORT_NAME,
+#    EXPORTED_TARGET, PACKAGE_DEPENDENCIES
+set(EXPORTED_TARGET FLAP::FLAP)
+set(PACKAGE_DEPENDENCIES FACE PENF)
+# create package config for install
 include(CMakePackageConfigHelpers)
-configure_package_config_file(cmake/PackageConfig.cmake.in ${cmake_files_dir}/${project_config}
+configure_package_config_file(
+    cmake/PackageConfig.cmake.in
+    ${cmake_files_dir}/${project_config}
     INSTALL_DESTINATION ${config_install_dir}
 )
+
 install(FILES ${cmake_files_dir}/${project_config}
     DESTINATION ${config_install_dir}
 )
 
-configure_package_config_file(cmake/PackageConfig.cmake.in ${config_build_dir}/${project_config}
+# create package config in build
+configure_package_config_file(
+    cmake/PackageConfig.cmake.in
+    ${config_build_dir}/${project_config}
     INSTALL_DESTINATION ${config_build_dir}
     INSTALL_PREFIX ${CMAKE_CURRENT_BINARY_DIR}
 )
+
+# # add project to user package registry if desired (but only if this is the main project)
+# if(main_project)
+#     cmake_policy(GET CMP0090 cmp0090)
+
+#     if (NOT ${cmp0090} STREQUAL "NEW")
+#         option(CMAKE_EXPORT_NO_PACKAGE_REGISTRY "Disable the export(PACKAGE) command when CMP0090 is not set to NEW." ON)
+#     endif()
+#     export(PACKAGE ${PROJECT_NAME})
+# endif()
