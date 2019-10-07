@@ -4,7 +4,7 @@
 # usage:
 #     find_package(FLAP)
 #     ...
-#     target_link_library(<target> FLAP)
+#     target_link_library(<target> FLAP::FLAP)
 #
 # the config file is generatet in the build and install directories
 
