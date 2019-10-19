@@ -4,7 +4,7 @@ include(CMakeFindDependencyMacro)
 
 if(NOT TARGET @EXPORTED_TARGET@ AND NOT @PROJECT_NAME@_BINARY_DIR)
     foreach(dep IN LISTS @PACKAGE_DEPENDENCIES@)
-        find_dependeny(${dep})
+        find_dependency(${dep})
     endforeach()
 
     include("${CMAKE_CURRENT_LIST_DIR}/@TARGETS_EXPORT_NAME@.cmake")
